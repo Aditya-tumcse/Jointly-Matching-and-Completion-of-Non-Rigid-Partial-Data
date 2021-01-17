@@ -22,10 +22,11 @@ def write_ply_ascii(file_name,params_to_write,num_points):
     :num_points: Number of camera positions to be generatedd.
     """
     
-    rootdir = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/ascii_ply_files/"
+    #rootdir = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/ascii_ply_files/"
+    rootdir = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/"
     if file_name.endswith('.off'):
         file_name = file_name[:-4]
-   
+    print(file_name)
     fid = open(rootdir + file_name + ".ply","w")
     fid.write("ply\n")
     fid.write("format ascii 1.0\n")
