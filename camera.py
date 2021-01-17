@@ -27,6 +27,7 @@ def random_camera_position(filename):
         z_data[i] = radius * np.cos(theta)
         camera_positions[i] = [x_data[i],y_data[i],z_data[i]]
     #md.write_ply_ascii(filename,camera_positions,number_points)
+
     return camera_positions  
 
 def camera_extrinsics(filename):
@@ -36,6 +37,7 @@ def camera_extrinsics(filename):
     ve = [0,1,0]
     up_vec = np.array(ve)
     cam_position = random_camera_position(filename)
+    
     centroid = md.centroid_model(filename)
     camera_extrinsics_matrix = np.zeros([50,4,4])
 
@@ -43,7 +45,7 @@ def camera_extrinsics(filename):
         camera_extrinsics_matrix[i]= view.m3dLookAt(cam_position[i],centroid,up_vec)
         camera_extrinsics_matrix[i] = np.transpose(camera_extrinsics_matrix[i])
     
-    return camera_extrinsics_matrix
+    return cam_position,camera_extrinsics_matrix
     
     
  
