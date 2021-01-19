@@ -26,7 +26,7 @@ def write_ply_ascii(file_name,params_to_write,num_points):
     rootdir = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/"
     if file_name.endswith('.off'):
         file_name = file_name[:-4]
-    print(file_name)
+    
     fid = open(rootdir + file_name + ".ply","w")
     fid.write("ply\n")
     fid.write("format ascii 1.0\n")
@@ -38,7 +38,7 @@ def write_ply_ascii(file_name,params_to_write,num_points):
     for i in range(num_points):
         fid.write("\n")
         for j in range(3):
-            fid.write(str(params_to_write[i][j]))
+            fid.write(str(params_to_write[i][j]) + "\t")
     
     fid.close()
 
