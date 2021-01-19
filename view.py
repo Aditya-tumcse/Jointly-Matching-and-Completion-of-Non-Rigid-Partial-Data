@@ -21,8 +21,8 @@ def m3dLookAt(eye, target, up):
     mz = normalize( (eye[0]-target[0], eye[1]-target[1], eye[2]-target[2]) ) # inverse line of sight
     mx = normalize( cross( up, mz ) )
     my = normalize( cross( mz, mx ) )
-    tx =  dot( mx, eye )
-    ty =  dot( my, eye )
-    tz = -dot( mz, eye )   
+    tx =  eye[0]
+    ty =  eye[1]
+    tz = -eye[2]   
     
     return np.array([mx[0], my[0], mz[0], 0, mx[1], my[1], mz[1], 0, mx[2], my[2], mz[2], 0, tx, ty, tz, 1]).reshape(4,4)
