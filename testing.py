@@ -12,7 +12,7 @@ def camera_orientation():
     for i in range(1,2):
         
         cam_pos = cam.random_camera_position(rootdir + files[i])
-        cam_pos = cam_pos[0]
+        cam_pos = cam_pos[1]
         vec_x = np.array([1,0,0])
         vec_y = np.array([0,1,0])
         vec_z = np.array([0,0,1])
