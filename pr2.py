@@ -125,7 +125,7 @@ def depth_map(fx,fy,cx,cy):
     
     extrinsic_matrix = cam.camera_extrinsics("/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/1746412.off")
     camera = pyrender.IntrinsicsCamera(fx,fy,cx,cy)
-    
+    print(np.shape(extrinsic_matrix))
     for i in range(np.shape(extrinsic_matrix)[0]):
         scene = pyrender.Scene()
         scene.add(mesh)
