@@ -44,8 +44,8 @@ def camera_extrinsics(filename):
     for i in range(np.shape(cam_position)[0]):
         camera_extrinsics_matrix[i]= view.m3dLookAt(cam_position[i],centroid,up_vec)
         camera_extrinsics_matrix[i] = np.transpose(camera_extrinsics_matrix[i])
-    
-    return cam_position,camera_extrinsics_matrix
+    print(camera_extrinsics_matrix)
+    return camera_extrinsics_matrix
     
     
  
