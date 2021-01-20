@@ -12,7 +12,9 @@ def camera_orientation():
     for i in range(1,2):
         
         cam_pos = cam.random_camera_position(rootdir + files[i])
+        centroid = md.centroid_model(rootdir + files[i])
         cam_pos = cam_pos[1]
+        
         vec_x = np.array([1,0,0])
         vec_y = np.array([0,1,0])
         vec_z = np.array([0,0,1])
@@ -30,7 +32,9 @@ def camera_orientation():
         params.append(cam_pos_x)
         params.append(cam_pos_y)
         params.append(cam_pos_z)
+        params.append(centroid)
+
+        md.write_ply_ascii(files[i],params,5)
         
-        md.write_ply_ascii(files[i],params,4)
         
-        
+camera_orientation()
