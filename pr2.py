@@ -132,8 +132,9 @@ def depth_map(fx,fy,cx,cy):
         parent_dir_depth_map = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/Depth_maps"
         directory = files[i]
         path = os.path.join(parent_dir_depth_map,directory)
-        os.mkdir(path)
+        os.mkdir(path) #Creates directories in the parent directory Depth_maps
         print("\nCreating directory ",files[i])
+
         ballet_vicon_trimesh = trimesh.load(rootdir + files[i] + ".off")
         mesh = pyrender.Mesh.from_trimesh(ballet_vicon_trimesh)
     
