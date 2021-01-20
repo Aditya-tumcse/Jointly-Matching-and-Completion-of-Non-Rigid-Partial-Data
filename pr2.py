@@ -120,25 +120,41 @@ def depth_map(fx,fy,cx,cy):
     :param cy: Centre of the image in y-coordinates
     """
 
-    ballet_vicon_trimesh = trimesh.load("/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/1746412.off")
-    mesh = pyrender.Mesh.from_trimesh(ballet_vicon_trimesh)
+    rootdir = "/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/"
+    path, dirs, files = next(os.walk(rootdir))
+    files = sorted(files)
+
+    for i in range(len(files)):
+        if files[i].endswith('.off'):
+            files[i] = files[i][:-4]
+            
+
+        parent_dir_depth_map = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/Depth_maps"
+        directory = files[i]
+        path = os.path.join(parent_dir_depth_map,directory)
+        os.mkdir(path)
+        print("\nCreating directory ",files[i])
+        ballet_vicon_trimesh = trimesh.load(rootdir + files[i] + ".off")
+        mesh = pyrender.Mesh.from_trimesh(ballet_vicon_trimesh)
     
-    extrinsic_matrix = cam.camera_extrinsics("/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/1746412.off")
-    camera = pyrender.IntrinsicsCamera(fx,fy,cx,cy)
-    print(np.shape(extrinsic_matrix))
-    for i in range(np.shape(extrinsic_matrix)[0]):
-        scene = pyrender.Scene()
-        scene.add(mesh)
-        scene.add(camera,pose=extrinsic_matrix[i])
+        extrinsic_matrix = cam.camera_extrinsics(rootdir + files[i] + ".off")
+        camera = pyrender.IntrinsicsCamera(fx,fy,cx,cy)
         
-        r = pyrender.OffscreenRenderer(1080,1080)
-        color,depth = r.render(scene)
+        for j in range(np.shape(extrinsic_matrix)[0]):
+            scene = pyrender.Scene()
+            scene.add(mesh)
+            scene.add(camera,pose=extrinsic_matrix[j])
         
-        plt.figure()
-        plt.plot()
-        plt.axis('off')
-        plt.imshow(depth,cmap=plt.cm.gray_r)
-        plt.show()
+            r = pyrender.OffscreenRenderer(1080,1080)
+            color,depth = r.render(scene)
+            
+            fig = plt.figure()
+            #plt.plot()
+            plt.axis('off')
+            plt.imshow(depth,cmap=plt.cm.gray_r)
+            fig.savefig(parent_dir_depth_map + "/" + files[i] + "/figure_" + str(j))
+            plt.close()
+       
         
 
 #face_numbers_of_keypoints("/home/aditya/PycharmProjects/OpenCV-python/Project_2/1746411_keypoints.ply","/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/1746411.off")
