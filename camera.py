@@ -34,8 +34,7 @@ def camera_extrinsics(filename):
     """The function gives the camera extrinsics. This is an implementation of opengl lookat function
     :param filename:Complete path to the .off file
     """
-    ve = [0,1,0]
-    up_vec = np.array(ve)
+    up_vec = np.array([0,1,0])
     cam_position = random_camera_position(filename)
     
     centroid = md.centroid_model(filename)
@@ -43,8 +42,7 @@ def camera_extrinsics(filename):
 
     for i in range(np.shape(cam_position)[0]):
         camera_extrinsics_matrix[i]= view.m3dLookAt(cam_position[i],centroid,up_vec)
-        camera_extrinsics_matrix[i] = np.transpose(camera_extrinsics_matrix[i])
-    print(camera_extrinsics_matrix)
+    
     return camera_extrinsics_matrix
     
     
@@ -52,5 +50,5 @@ def camera_extrinsics(filename):
         
 
 
-#camera_extrinsics("/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/1746412.off")
+camera_extrinsics("/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/1746412.off")
 #random_camera_position("/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/1746412.off")
