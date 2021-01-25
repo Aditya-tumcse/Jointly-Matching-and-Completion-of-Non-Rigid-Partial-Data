@@ -45,7 +45,9 @@ def camera_extrinsics(filename):
     
     return camera_extrinsics_matrix
     
-    
+def camera_intrinsics(fx,fy,cx,cy):
+    return(np.array([[fx,0,cx],[0,fy,cy],[0,0,1]],dtype="double"))
+
  
         
 
