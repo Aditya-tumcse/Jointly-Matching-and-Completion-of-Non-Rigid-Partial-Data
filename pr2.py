@@ -11,6 +11,8 @@ import pyrender
 import model_data as md
 import camera as cam
 import trimesh
+import cv2
+import fusion
 
 
 def triangle_area(v1,v2,v3):
@@ -124,12 +126,14 @@ def depth_map(fx,fy,cx,cy):
     path, dirs, files = next(os.walk(rootdir))
     files = sorted(files)
 
-    for i in range(len(files)):
+    #for i in range(len(files)):
+    for i in range(1):    
         if files[i].endswith('.off'):
             files[i] = files[i][:-4]
             
 
-        parent_dir_depth_map = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/Depth_maps"
+        #parent_dir_depth_map = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/Depth_maps"
+        parent_dir_depth_map = "/home/aditya/PycharmProjects/OpenCV-python/Project_2"
         directory = files[i]
         path = os.path.join(parent_dir_depth_map,directory)
         os.mkdir(path) #Creates directories in the parent directory Depth_maps
@@ -148,18 +152,51 @@ def depth_map(fx,fy,cx,cy):
         
             r = pyrender.OffscreenRenderer(1080,1080)
             color,depth = r.render(scene)
-            
+            print(depth)
             fig = plt.figure()
             #plt.plot()
             plt.axis('off')
             plt.imshow(depth,cmap=plt.cm.gray_r)
+            plt.imshow(color)
             fig.savefig(parent_dir_depth_map + "/" + files[i] + "/figure_" + str(j))
+            fig.savefig(parent_dir_depth_map + "/" + files[i] + "/cfig_" + str(j))
             plt.close()
+
+            np.savez_compressed("/home/aditya/PycharmProjects/OpenCV-python/Project_2/TDCV-Project-2/trial1.npz",depth=depth)
        
-        
+def tsdf_voxel_volume(fx,fy,cx,cy):
+    print("Estimating voxel volume bounds....")
+    cam_intrinsics =  cam.camera_intrinsics(fx,fy,cx,cy)
+    vol_bnds = np.zeros((3,2))
+    #color_image = cv2.cvtColor(cv2.imread("/home/aditya/PycharmProjects/OpenCV-python/Project_2/1746411/cfig_0.png"), cv2.COLOR_BGR2RGB)
+    #depth_image = cv2.imread("/home/aditya/PycharmProjects/OpenCV-python/Project_2/1746411/figure_0.png").astype(float)
+    depth_image = np.load("/home/aditya/PycharmProjects/OpenCV-python/Project_2/TDCV-Project-2/trial1.npz")['depth']
+    #depth_image /= 1000
+    camera_pose = np.identity(4)
+
+    view_frust_pts = fusion.get_view_frustum(depth_image,cam_intrinsics,camera_pose)
+    vol_bnds[:,0] = np.minimum(vol_bnds[:,0],np.amin(view_frust_pts,axis=1))
+    vol_bnds[:,1] = np.maximum(vol_bnds[:,1],np.amax(view_frust_pts,axis = 1))
+    
+
+    print("Initializing voxel volume...")
+    tsdf_vol = fusion.TSDFVolume(vol_bnds, voxel_size=0.01)
+    
+    
+    tsdf_vol.integrate(depth_image,depth_image, cam_intrinsics, camera_pose, obs_weight=1.0)
+    print("Saving mesh to mesh.ply...")
+    verts, faces, norms, colors = tsdf_vol.get_mesh()
+    fusion.meshwrite("mesh.ply", verts, faces, norms, colors)
+    """
+    # Get point cloud from voxel volume and save to disk (can be viewed with Meshlab)
+    print("Saving point cloud to pc.ply...")
+    point_cloud = tsdf_vol.get_point_cloud()
+    fusion.pcwrite("pc.ply", point_cloud)
+    """
 
 #face_numbers_of_keypoints("/home/aditya/PycharmProjects/OpenCV-python/Project_2/1746411_keypoints.ply","/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/1746411.off")
 #matching_keypoints()
 #centroid_model("/home/aditya/Documents/Sem_3/TDCV/project_2/tracking/ballet_vicon/mesh/1746411.off")
 #random_camera_position(50,4)
-depth_map(3000,3000,540.0,540.0)
+#depth_map(3000,3000,540.0,540.0)
+tsdf_voxel_volume(3000,3000,540.0,540.0)
