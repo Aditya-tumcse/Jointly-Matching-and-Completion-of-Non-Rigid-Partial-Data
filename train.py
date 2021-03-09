@@ -63,13 +63,13 @@ if __name__ == 'main':
     train_loss = []
     loss_val = 0
 
-    for i in range(Flags.max_iter):
-        siamese_net.train()
-        for batch_id, (img1, img2, label) in enumerate(train_set_loader, 1):
-            if Flags.cuda:
-                img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
-            else:
-                img1, img2, label = Variable(img1), Variable(img2), Variable(label)
+    for batch_id, (img1, img2, label) in enumerate(train_set_loader, 1):
+        if(batch_id > Flags.max_iter):
+            break
+        if(Flags.cuda):
+            img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
+        else:
+            img1, img2, label = Variable(img1), Variable(img2), Variable(label)
         
             optimizer.zero_grad()
             output = siamese_net(img1,img2)
