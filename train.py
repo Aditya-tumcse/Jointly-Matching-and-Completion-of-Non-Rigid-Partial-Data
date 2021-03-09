@@ -3,6 +3,7 @@ import torchvision
 import pickle
 from torchvision import transforms
 from torch.utils.data import DataLoader
+from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
