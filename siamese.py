@@ -9,7 +9,7 @@ class Siamese(nn.Module):
         self.fc = nn.Linear(512,2)
 
     def forward_once(self,x):
-        out = self.moel(x)
+        out = self.model(x)
         out = F.relu(self.fc(out))
         return out
 
