@@ -12,22 +12,18 @@ import gflags
 import resnet
 import siamese
 import loss
+import config
 
 if __name__ == 'main':
 
     Flags = gflags.FLAGS
     gflags.DEFINE_bool("cuda",True,"use cuda")
-    gflags.DEFINE_string("train_path","<Provide_path_to_the_directory_containing_training_data","training_folder") #Training set path
-    gflags.DEFINE_string("validation_path","<Provide_path_to_the_directory_containing_validation_data>","validation_folder") #validation set path
     gflags.DEFINE_integer("way", 20, "how much way one-shot learning")
     gflags.DEFINE_string("times", 400, "number of samples to test accuracy") #Size of validation set
     gflags.DEFINE_integer("workers", 4, "number of dataLoader workers") #number of CPU cores
-    gflags.DEFINE_integer("batch_size", 64, "number of batch size") #Batch size
-    gflags.DEFINE_float("lr", 0.00001, "learning rate") #Learning rate
     gflags.DEFINE_integer("show_every", 10, "show result after each show_every iter.") 
     gflags.DEFINE_integer("save_every", 100, "save model after each save_every iter.")
     gflags.DEFINE_integer("test_every", 100, "test model after each test_every iter.")
-    gflags.DEFINE_integer("max_iter", 50000, "number of iterations before stopping") #max number of iterations/epochs
     gflags.DEFINE_string("model_path", "Provide path to the Siamese model", "path to store model") #Path to the neural network model
     gflags.DEFINE_string("gpu_ids", "0,1,2,3", "gpu ids used to train") #Number of GPU cores
     
@@ -38,17 +34,17 @@ if __name__ == 'main':
     os.environ["CUDA_VISIBLE_DEVICES"] = Flags.gpu_ids
     print("use gpu:", Flags.gpu_ids, "to train.")
 
-    train_set = BalletDancer(Flags.train_path,transform=data_transforms) 
-    validation_set = GoalKeeper(Flags.validation_path,transform=data_transforms,times=Flags.times,way=Flags.way)
+    train_set = BalletDancer(config.Config.training_set_dir,transform=data_transforms) 
+    validation_set = GoalKeeper(config.Config.validation_set_dir,transform=data_transforms,times=Flags.times,way=Flags.way)
     
     #Loading train and validation set
-    train_set_loader = DataLoader(train_set,batch_size=Flags.batch_size,shuffle=False,num_workers=Flags.workers)
-    validation_set_loader = DataLoader(validation_set,batch_size=Flags.batch_size,shuffle=false,num_workers=Flags.workers)
+    train_set_loader = DataLoader(train_set,batch_size=config.Config.train_batch_size,shuffle=False,num_workers=Flags.workers)
+    validation_set_loader = DataLoader(validation_set,batch_size=config.Config.train_batch_size,shuffle=false,num_workers=Flags.workers)
 
-    intermediate_net = resnet.generate_model(18)
+    intermediate_net = resnet.generate_model(config.Config.resnet_depth)
     siamese_net = siamese.Siamese(intermediate_net)
 
-    loss_function = loss.ContrastiveLoss(1.0)
+    loss_function = loss.ContrastiveLoss(config.Config.contrastive_margin)
 
     # multi gpu
     if len(Flags.gpu_ids.split(",")) > 1:
@@ -58,24 +54,32 @@ if __name__ == 'main':
         siamese_net.cuda()
 
     siamese_net.train()
-    optimizer = torch.optim.Adam(siamese_net.parameters(),lr=Flags.lr)
+    optimizer = torch.optim.Adam(siamese_net.parameters(),lr=config.Config.learning_rate)
     optimizer.zero_grad()
 
     train_loss = []
     loss_val = 0
+    iteration_number = 0
+    counter = []
 
-    for batch_id, (img1, img2, label) in enumerate(train_set_loader, 1):
-        if(batch_id > Flags.max_iter):
-            break
-        if(Flags.cuda):
-            img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
-        else:
-            img1, img2, label = Variable(img1), Variable(img2), Variable(label)
+    for epoch in range(0,config.Config.train_number_epochs):
+        for batch_id, (img1, img2, label) in enumerate(train_set_loader, 1):
+            if(Flags.cuda):
+                img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
+            else:
+                img1, img2, label = Variable(img1), Variable(img2), Variable(label)
         
             optimizer.zero_grad()
-            output = siamese_net(img1,img2)
-            loss = loss_function(output[0],output[1],label)
-            print(loss)
+            output1,output2 = siamese_net(img1,img2)
+            loss = loss_function(output1,output2,label)
+            loss_val += loss
             loss.backward()
             optimizer.step()
             
+            if(batch_id % Flags.show_every == 0):
+                print("epoch number: {}\t Current loss: {}\n".format(epoch,loss.item()))
+                iteration_number += 10
+                counter.append(iteration_number)
+                train_loss.append(loss.item())
+    plt.plot(counter,train_loss)
+    plt.show()
