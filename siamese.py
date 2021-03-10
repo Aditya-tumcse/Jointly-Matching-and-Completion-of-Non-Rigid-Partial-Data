@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Siamese(nn.Module):
     def __init__(self,model):
         super(Siamese,self).__init__()
@@ -17,3 +18,11 @@ class Siamese(nn.Module):
         out_1 = self.forward_once(input_1)
         out_2 = self.forward_once(input_2)
         return(out_1,out_2)
+
+"""
+#for test.Import 3D ResNet architecture to test
+if __name__ == '__main__':
+    net = Siamese(resnet.generate_model(10))
+    print(net)
+    print(list(net.parameters()))
+"""
