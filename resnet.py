@@ -104,10 +104,10 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm3d(self.in_planes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, block_inplanes[0], layers[0],shortcut_type)
-        self.layer2 = self._make_layer(block,block_inplanes[1],layers[1],shortcut_type,stride=2)
-        self.layer3 = self._make_layer(block,block_inplanes[2],layers[2],shortcut_type,stride=2)
-        self.layer4 = self._make_layer(block,block_inplanes[3],layers[3],shortcut_type,stride=2)
+        self.layer1 = self._make_layer(block, block_inplanes[0], layer[0],shortcut_type)
+        self.layer2 = self._make_layer(block,block_inplanes[1],layer[1],shortcut_type,stride=2)
+        self.layer3 = self._make_layer(block,block_inplanes[2],layer[2],shortcut_type,stride=2)
+        self.layer4 = self._make_layer(block,block_inplanes[3],layer[3],shortcut_type,stride=2)
 
         self.avgpool = nn.AdaptiveAvgPool3d((1, 1, 1))
         self.fc = nn.Linear(block_inplanes[3] * block.expansion, n_classes)
@@ -175,3 +175,10 @@ def generate_model(model_depth, **kwargs):
         model = ResNet(BasicBlock, [2, 2, 2, 2], get_inplanes(), **kwargs)
     
     return model
+
+"""
+#For test
+if __name__ == '__main__':
+    net = generate_model(18)
+    print(net)
+"""
