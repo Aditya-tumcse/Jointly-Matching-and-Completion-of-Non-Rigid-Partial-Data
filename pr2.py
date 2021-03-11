@@ -168,10 +168,7 @@ def tsdf_voxel_volume(fx,fy,cx,cy):
     print("Estimating voxel volume bounds....")
     cam_intrinsics =  cam.camera_intrinsics(fx,fy,cx,cy)
     vol_bnds = np.zeros((3,2))
-    #color_image = cv2.cvtColor(cv2.imread("/home/aditya/PycharmProjects/OpenCV-python/Project_2/1746411/cfig_0.png"), cv2.COLOR_BGR2RGB)
-    #depth_image = cv2.imread("/home/aditya/PycharmProjects/OpenCV-python/Project_2/1746411/figure_0.png").astype(float)
     depth_image = np.load("/home/aditya/PycharmProjects/OpenCV-python/Project_2/TDCV-Project-2/trial1.npz")['depth']
-    #depth_image /= 1000
     camera_pose = np.identity(4)
 
     view_frust_pts = fusion.get_view_frustum(depth_image,cam_intrinsics,camera_pose)
