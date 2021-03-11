@@ -4,6 +4,7 @@ import pickle
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
+from dataloader import BalletDancer
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -29,17 +30,18 @@ if __name__ == 'main':
     
     Flags(sys.argv)
 
-    data_transforms = transforms.Compose([transforms.ToTensor()]) #data augmentation.Here converting the input data into a tensor
+    #data_transforms = transforms.Compose([transforms.ToTensor()]) #data augmentation.Here converting the input data into a tensor
 
     os.environ["CUDA_VISIBLE_DEVICES"] = Flags.gpu_ids
     print("use gpu:", Flags.gpu_ids, "to train.")
 
-    train_set = BalletDancer(config.Config.training_set_dir,transform=data_transforms) 
-    validation_set = GoalKeeper(config.Config.validation_set_dir,transform=data_transforms,times=Flags.times,way=Flags.way)
+    
+    train_set = BalletDancer() 
+    #validation_set = GoalKeeper(config.Config.validation_set_dir,transform=data_transforms,times=Flags.times,way=Flags.way)
     
     #Loading train and validation set
     train_set_loader = DataLoader(train_set,batch_size=config.Config.train_batch_size,shuffle=False,num_workers=Flags.workers)
-    validation_set_loader = DataLoader(validation_set,batch_size=config.Config.train_batch_size,shuffle=false,num_workers=Flags.workers)
+    #validation_set_loader = DataLoader(validation_set,batch_size=config.Config.train_batch_size,shuffle=false,num_workers=Flags.workers)
 
     intermediate_net = resnet.generate_model(config.Config.resnet_depth)
     siamese_net = siamese.Siamese(intermediate_net)
