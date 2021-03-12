@@ -3,6 +3,7 @@ import os
 import numpy as np
 import random
 import numpy as np
+import config
 from torch.utils.data import Dataset,DataLoader
 
 
@@ -10,32 +11,39 @@ class BalletDancer():
     def __init__(self,transform=None):
         super(BalletDancer,self).__init__()
         np.random.seed(0)
-        self.data,self.num_kps = self.load_patch()
-        self._get_patch_path_()
+        self.idx = 0
+        self.data = self.load_patch()
         self.transform = transform
 
     def load_patch(self):
-        rootdir = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/patch_files/"
+        rootdir = config.Config.training_set_dir
         path, dirs, files = next(os.walk(rootdir))
         dirs = sorted(dirs)
-        data_set = []
-        idx = 0
-        visible_key_point = np.load("/home/aditya/PycharmProjects/OpenCV-python/Project_2/TDCV-Project-2/kp_visibility.npz",allow_pickle=True)['visibility']
-        for i in range(int(min(dirs)),int(max(dirs))):
+        data_set = self.data_initializer()
+        
+        visible_key_point = np.load(rootdir + "/" + "kp_visibility.npz",allow_pickle=True)['visibility']
+        k = 0
+        for i in range(int(min(dirs)),int(max(dirs)),config.Training_Data_Config.stride):
             cam_num = os.listdir(rootdir + str(i))
             for cam in range(len(cam_num)):
-                visible_kp = visible_key_point[i][cam]
-                data_set[visible_kp] = []
+                visible_kp = visible_key_point[i][cam] + str(i))
+            for cam in range(len(cam_num)):
+                visible_kp = visible_key_point[k][cam]
                 for j in range(len(visible_kp)):
                     key_point = visible_kp[j]
                     data_set[key_point].append((i,cam))
-                    idx += 1
-            i += 1
-        return(data_set,idx)
+                    self.idx += 1
+            k += 1
+        return data_set
         
+    def data_initializer(self):
+        data_set = {}
+        for n in range(config.Training_Data_Config.number_keypoints):
+            data_set[n] = []
+        return data_set
         
     def _get_patch_path_(self,frame_num,cam_num,kp_num):
-        rootdir = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/patch_files/"
+        rootdir = config.Config.training_set_dir
         return(rootdir + str(frame_num) + "/" + str(cam_num) + "/" + "tsdf_path_" + str(kp_num))
 
     def _get_item_(self,index):
@@ -64,20 +72,3 @@ class BalletDancer():
             patch2 = self.transform(patch2)
         
         return(patch1,patch2,torch.from_numpy(np.array([label],dtype=np.float32)))
-
-    
-    
-
-    
-
-
-            
-            
-        
-
-
-#a = np.load("/home/aditya/PycharmProjects/OpenCV-python/Project_2/patch_files/tsdf_patch_0.npz")["patch"]
-#a = BalletDancer.loadToMem("/home/aditya/PycharmProjects/OpenCV-python/Project_2/patch_files/1746411/")
-
-if __name__ == '__main__':
-    BalletDancer()    
