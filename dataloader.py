@@ -75,3 +75,42 @@ class BalletDancer():
             patch2 = self.transform(patch2)
         
         return(patch1,patch2,label)
+
+class GoalKeeper(Dataset):
+    def __init__(self,transform=None):
+        super(GeneratorExit,self).__init__
+        self.transform = transform
+        self.val_data = self.load_val_patch
+
+    def load_val_patch(self):
+        val_data = np.load(config.Validation_Data_Config.validation_set_dir + "validation_data.npz",allow_pickle=True)['data']
+        return val_data
+    
+    def __len__(self):
+        return config.Validation_Data_Config.validation_data_size
+    
+    def _get_file_number(self,file):
+        file_num = file
+        if file < 100:
+            file_num = "00" + str(file)
+        else:
+            file_num = "0" + str(file)
+        return file_num
+
+    def _get_val_patch_path(self,frame_num,cam_num,kp_num):
+        rootdir = config.Validation_Data_Config.validation_set_dir
+        return(rootdir + self._get_file_number(frame_num) + str(cam_num) + "/tsdf_patch_" + str(kp_num))
+
+    def __getitem__(self,index):
+        patch_1,patch_2,label = self.val_data[index]
+        patch1 = np.load(self._get_val_patch_path(patch_1[0],patch_1[1],patch_1[2]))
+        patch2 = np.load(self._get_val_patch_path(patch_2[0],patch_2[1],patch_2[2]))
+
+        if self.transform:
+            patch1 = self.transform(patch1)
+            patch2 = self.transform(patch2)
+
+        return patch1,patch_1,patch2,patch_2,label
+        
+        
+
