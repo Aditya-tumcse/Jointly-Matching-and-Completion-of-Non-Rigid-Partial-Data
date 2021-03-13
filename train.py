@@ -9,79 +9,89 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import os
-import gflags
+import wandb
 import resnet
 import siamese
 import loss
 import config
 
-if __name__ == 'main':
+def wandb_initiliazer(args):
+    with wandb.init(project="pytorch-demo", config=args):
+        config = wandb.config
 
-    Flags = gflags.FLAGS
-    gflags.DEFINE_bool("cuda",True,"use cuda")
-    gflags.DEFINE_integer("way", 20, "how much way one-shot learning")
-    gflags.DEFINE_string("times", 400, "number of samples to test accuracy") #Size of validation set
-    gflags.DEFINE_integer("workers", 4, "number of dataLoader workers") #number of CPU cores
-    gflags.DEFINE_integer("show_every", 10, "show result after each show_every iter.") 
-    gflags.DEFINE_integer("save_every", 100, "save model after each save_every iter.")
-    gflags.DEFINE_integer("test_every", 100, "test model after each test_every iter.")
-    gflags.DEFINE_string("model_path", "Provide path to the Siamese model", "path to store model") #Path to the neural network model
-    gflags.DEFINE_string("gpu_ids", "0,1,2,3", "gpu ids used to train") #Number of GPU cores
-    
-    Flags(sys.argv)
+        model, train_loader, val_loader, loss_fn, optimizer = nn_model(config)
 
-    #data_transforms = transforms.Compose([transforms.ToTensor()]) #data augmentation.Here converting the input data into a tensor
+        train(model, train_loader, val_loader, loss_fn, optimizer, config)
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = Flags.gpu_ids
-    print("use gpu:", Flags.gpu_ids, "to train.")
+    return model
+
+
+def nn_model(config):
+    data_transforms = transforms.Compose([transforms.ToTensor()]) #data augmentation.Here converting the input data into a tensor
 
     
-    train_set = BalletDancer() 
-    #validation_set = GoalKeeper(config.Config.validation_set_dir,transform=data_transforms,times=Flags.times,way=Flags.way)
+    train_set = BalletDancer(data_transforms) 
+    validation_set = GoalKeeper(data_transforms)
     
     #Loading train and validation set
-    train_set_loader = DataLoader(train_set,batch_size=config.Config.train_batch_size,shuffle=False,num_workers=Flags.workers)
-    #validation_set_loader = DataLoader(validation_set,batch_size=config.Config.train_batch_size,shuffle=false,num_workers=Flags.workers)
-
+    train_set_loader = DataLoader(train_set,batch_size=config.Config.train_batch_size,shuffle=False,num_workers=config.Config.number_workers)
+    validation_set_loader = DataLoader(validation_set,batch_size=config.Config.train_batch_size,shuffle=false,num_workers=Flags.workers)
+    
+    #Build the model
     intermediate_net = resnet.generate_model(config.Config.resnet_depth)
     siamese_net = siamese.Siamese(intermediate_net)
 
     loss_function = loss.ContrastiveLoss(config.Config.contrastive_margin)
 
-    # multi gpu
-    if len(Flags.gpu_ids.split(",")) > 1:
-        siamese_net = torch.nn.DataParallel(siamese_net)
-
-    if Flags.cuda:
+    if config.Config.device.type == 'cuda':
         siamese_net.cuda()
 
-    siamese_net.train()
+    
     optimizer = torch.optim.Adam(siamese_net.parameters(),lr=config.Config.learning_rate)
-    optimizer.zero_grad()
-
-    train_loss = []
+    return siamese_net,train_set_loader,validation_set_loader,loss_function,optimizer
+    
+def train(NN_model,train_set_loader,val_set_loader,loss_fn,optimizer,config):
+    wandb.watch(NN_model,loss_fn,log='all',log_freq=20)
+    
+    num_seen_samples = 0
+    mini_batches = 0
     loss_val = 0
-    iteration_number = 0
-    counter = []
 
     for epoch in range(0,config.Config.train_number_epochs):
-        for batch_id, (img1, img2, label) in enumerate(train_set_loader, 1):
-            if(Flags.cuda):
-                img1, img2, label = Variable(img1.cuda()), Variable(img2.cuda()), Variable(label.cuda())
+        NN_model.train()
+
+        for batch_id, (patch1, patch2, label) in enumerate(train_set_loader, 1):
+            if(config.Config.device.type == 'cuda'):
+                patch1, patch2, label = patch1.cuda(), patch2.cuda(), label.cuda()
             else:
-                img1, img2, label = Variable(img1), Variable(img2), Variable(label)
+                patch1, patch2, label = patch1,patch2,label
         
+            
+            output1,output2 = siamese_net(patch1.float(),patch2.float())
+            distances = (output2 - output1).pow(2).sum(1)
+            loss = loss_function(distances,label)
+            
             optimizer.zero_grad()
-            output1,output2 = siamese_net(img1,img2)
-            loss = loss_function(output1,output2,label)
-            loss_val += loss
             loss.backward()
             optimizer.step()
+
+            num_seen_samples += len(patch1)
+            mini_batches += 1
+            loss_val += loss
+
+            if (mini_batches % 200) == 0:
+                print("Training loss after %d batches"%(int(num_seen_samples/config.Config.train_batch_size)))
+
+            #Plotting in wand b
+            if (mini_batches % config.Config.plot_frequency == 0):
+                training_log(loss_val,mini_batches)
+                loss_val = 0
             
-            if(batch_id % Flags.show_every == 0):
-                print("epoch number: {}\t Current loss: {}\n".format(epoch,loss.item()))
-                iteration_number += 10
-                counter.append(iteration_number)
-                train_loss.append(loss.item())
-    plt.plot(counter,train_loss)
-    plt.show()
+def training_log(loss,iteration,NN_train = True):
+    if NN_train:
+        wandb.log({"Traning loss:",float(loss)},step=iteration)
+        print("Training loss after " + str(iteration) + "iterations:" + str(float(loss)))
+    else:
+        wandb.log({"Validation loss:",float(loss)},step=iteration)
+        print("Validation loss after " + str(iteration) + "iterations:" + str(float(loss)))
+
