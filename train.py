@@ -78,7 +78,7 @@ def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,confi
     mini_batches = 0
     loss_value = 0
 
-    for epoch in range(0,configuration.Config.train_number_epochs):
+    for epoch in range(configuration.Config.train_number_epochs):
         for batch_id, (patch1, patch2, label) in enumerate(train_set_loader, 1):
             NN_model.train()
             if(configuration.Config.device.type == 'cuda'):
