@@ -16,7 +16,7 @@ class BalletDancer(Dataset):
         self.transform = transform
 
     def load_patch(self):
-        rootdir = configuration.Config.training_set_dir
+        rootdir = configuration.training_configuration.training_set_dir
         path, dirs, files = next(os.walk(rootdir))
         dirs = sorted(dirs)
         data_set = self.data_initializer()
@@ -43,7 +43,7 @@ class BalletDancer(Dataset):
         return data_set
         
     def _get_patch_path_(self,frame_num,cam_num,kp_num):
-        rootdir = configuration.Config.training_set_dir
+        rootdir = configuration.training_configuration.training_set_dir
         return(rootdir + str(frame_num) + "/" + str(cam_num) + "/tsdf_path_" + str(kp_num))
 
     def __len__(self):
