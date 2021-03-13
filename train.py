@@ -33,20 +33,20 @@ def nn_model(config):
     validation_set = GoalKeeper(data_transforms)
     
     #Loading train and validation set
-    train_set_loader = DataLoader(train_set,batch_size=configuration.Config.train_batch_size,shuffle=False,num_workers=configuration.Config.number_workers)
-    validation_set_loader = DataLoader(validation_set,batch_size=configuration.Config.train_batch_size,shuffle=False,num_workers=configuration.Config.number_workers)
+    train_set_loader = DataLoader(train_set,batch_size=configuration.training_configuration.train_batch_size,shuffle=False,num_workers=configuration.training_configuration.number_workers)
+    validation_set_loader = DataLoader(validation_set,batch_size=configuration.training_configuration.train_batch_size,shuffle=False,num_workers=configuration.training_configuration.number_workers)
     
     #Build the model
-    intermediate_net = resnet.generate_model(configuration.Config.resnet_depth)
+    intermediate_net = resnet.generate_model(configuration.training_configuration.resnet_depth)
     siamese_net = siamese.Siamese(intermediate_net)
 
-    loss_function = loss.ContrastiveLoss(configuration.Config.contrastive_margin)
+    loss_function = loss.ContrastiveLoss(configuration.training_configuration.contrastive_margin)
 
-    if configuration.Config.device.type == 'cuda':
+    if configuration.training_configuration.device.type == 'cuda':
         siamese_net.cuda()
 
     
-    optimizer = torch.optim.Adam(siamese_net.parameters(),lr=configuration.Config.learning_rate)
+    optimizer = torch.optim.Adam(siamese_net.parameters(),lr=configuration.training_configuration.learning_rate)
     return siamese_net,train_set_loader,validation_set_loader,loss_function,optimizer
 
 def validation_phase(NN_model,val_set_loader,loss_function):
@@ -56,7 +56,7 @@ def validation_phase(NN_model,val_set_loader,loss_function):
     loss_val = 0
 
     for batch_id, (patch1, patch2, label) in enumerate(val_set_loader, 1):
-        if(configuration.Config.device.type == 'cuda'):
+        if(configuration.training_configuration.device.type == 'cuda'):
             patch1, patch2, label = patch1.cuda(), patch2.cuda(), label.cuda()
         else:
             patch1, patch2, label = patch1,patch2,label
@@ -78,10 +78,10 @@ def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,confi
     mini_batches = 0
     loss_value = 0
 
-    for epoch in range(configuration.Config.train_number_epochs):
+    for epoch in range(configuration.training_configuration.train_number_epochs):
         for batch_id, (patch1, patch2, label) in enumerate(train_set_loader, 1):
             NN_model.train()
-            if(configuration.Config.device.type == 'cuda'):
+            if(configuration.training_configuration.device.type == 'cuda'):
                 patch1, patch2, label = patch1.cuda(), patch2.cuda(), label.cuda()
             else:
                 patch1, patch2, label = patch1,patch2,label
@@ -100,10 +100,10 @@ def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,confi
             loss_value += float(loss)
 
             if (mini_batches % 200) == 0:
-                print("Training loss after %d batches"%(int(num_seen_samples/configuration.Config.train_batch_size)))
+                print("Training loss after %d batches"%(int(num_seen_samples/configuration.training_configuration.train_batch_size)))
 
             #Plotting in wand b
-            if (mini_batches % configuration.Config.plot_frequency == 0):
+            if (mini_batches % configuration.training_configuration.plot_frequency == 0):
                 val_loss = validation_phase(NN_model,val_set_loader,loss_function)
 
                 training_log(loss_value,mini_batches)
