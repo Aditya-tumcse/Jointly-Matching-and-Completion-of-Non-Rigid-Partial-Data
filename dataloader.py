@@ -21,12 +21,11 @@ class BalletDancer():
         dirs = sorted(dirs)
         data_set = self.data_initializer()
         
-        visible_key_point = np.load(rootdir + "/" + "kp_visibility.npz",allow_pickle=True)['visibility']
+        visible_key_point = np.load(rootdir + "/kp_visibility.npz",allow_pickle=True)['visibility']
         k = 0
         for i in range(int(min(dirs)),int(max(dirs)),config.Training_Data_Config.stride):
             cam_num = os.listdir(rootdir + str(i))
-            for cam in range(len(cam_num)):
-                visible_kp = visible_key_point[i][cam] + str(i))
+            
             for cam in range(len(cam_num)):
                 visible_kp = visible_key_point[k][cam]
                 for j in range(len(visible_kp)):
@@ -34,6 +33,7 @@ class BalletDancer():
                     data_set[key_point].append((i,cam))
                     self.idx += 1
             k += 1
+        print("Data loading complete")
         return data_set
         
     def data_initializer(self):
@@ -44,13 +44,16 @@ class BalletDancer():
         
     def _get_patch_path_(self,frame_num,cam_num,kp_num):
         rootdir = config.Config.training_set_dir
-        return(rootdir + str(frame_num) + "/" + str(cam_num) + "/" + "tsdf_path_" + str(kp_num))
+        return(rootdir + str(frame_num) + "/" + str(cam_num) + "/tsdf_path_" + str(kp_num))
+
+    def __len__(self):
+        return config.Training_Data_Config.training_data_size
 
     def _get_item_(self,index):
         #get patch from same classs
         if(index % 2 == 1):
             label = 1
-            kp = random.randint(0,self.num_kps - 1)
+            kp = random.randint(0,config.Training_Data_Config.number_keypoints - 1)
             frame1,cam1 = random.choice(self.data[kp])
             patch1 = np.load(self._get_patch_path_(frame1,cam1,kp))['patch']
             frame2,cam2 = random.choice(self.data[kp])
@@ -58,17 +61,17 @@ class BalletDancer():
         #get patch from different class
         else:
             label = 0
-            kp_1 = random.randint(0,self.num_kps - 1)
-            kp_2 = random.randint(0,self.num_kps - 1)
+            kp_1 = random.randint(0,config.Training_Data_Config.number_keypoints - 1)
+            kp_2 = random.randint(0,config.Training_Data_Config.number_keypoints - 1)
             while kp_1 == kp_2:
-                kp_2 = random.randint(0,self.num_kps - 1)
+                kp_2 = random.randint(0,config.Training_Data_Config.number_keypoints - 1)
             frame1,cam1 = random.choice(self.data[kp_1])
             patch1 = np.load(self._get_patch_path_(frame1,cam1,kp_1))['patch']
             frame2,cam2 = random.choice(self.data[kp_2])
-            patch2 = np.load(self._get_patch_path_(frame1,cam1,kp_2))['patch'
+            patch2 = np.load(self._get_patch_path_(frame1,cam1,kp_2))['patch']
 
         if self.transform:
             patch1 = self.transform(patch1)
             patch2 = self.transform(patch2)
         
-        return(patch1,patch2,torch.from_numpy(np.array([label],dtype=np.float32)))
+        return(patch1,patch2,label)
