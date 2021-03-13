@@ -1,7 +1,7 @@
 import torch
 
 class Config():
-    training_set_dir = "/home/aditya/PycharmProjects/OpenCV-python/Project_2/patch_files/"
+    training_set_dir = "/cluster/sorona/hyu/ptdcv/ballet/"
     train_batch_size = 64
     train_number_epochs = 100
     learning_rate = 0.0001
