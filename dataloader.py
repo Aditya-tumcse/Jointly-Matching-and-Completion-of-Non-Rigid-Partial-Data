@@ -7,7 +7,7 @@ import configuration
 from torch.utils.data import Dataset,DataLoader
 
 
-class BalletDancer():
+class BalletDancer(Dataset):
     def __init__(self,transform=None):
         super(BalletDancer,self).__init__()
         np.random.seed(0)
@@ -78,7 +78,7 @@ class BalletDancer():
 
 class GoalKeeper(Dataset):
     def __init__(self,transform=None):
-        super(GeneratorExit,self).__init__
+        super(GoalKeeper,self).__init__
         self.transform = transform
         self.val_data = self.load_val_patch
 
