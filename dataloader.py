@@ -3,7 +3,7 @@ import os
 import numpy as np
 import random
 import numpy as np
-import config
+import configuration
 from torch.utils.data import Dataset,DataLoader
 
 
@@ -16,14 +16,14 @@ class BalletDancer():
         self.transform = transform
 
     def load_patch(self):
-        rootdir = config.Config.training_set_dir
+        rootdir = configuration.Config.training_set_dir
         path, dirs, files = next(os.walk(rootdir))
         dirs = sorted(dirs)
         data_set = self.data_initializer()
         
         visible_key_point = np.load(rootdir + "/kp_visibility.npz",allow_pickle=True)['visibility']
         k = 0
-        for i in range(int(min(dirs)),int(max(dirs)),config.Training_Data_Config.stride):
+        for i in range(int(min(dirs)),int(max(dirs)),configuration.Training_Data_Config.stride):
             cam_num = os.listdir(rootdir + str(i))
             
             for cam in range(len(cam_num)):
@@ -38,22 +38,22 @@ class BalletDancer():
         
     def data_initializer(self):
         data_set = {}
-        for n in range(config.Training_Data_Config.number_keypoints):
+        for n in range(configuration.Training_Data_Config.number_keypoints):
             data_set[n] = []
         return data_set
         
     def _get_patch_path_(self,frame_num,cam_num,kp_num):
-        rootdir = config.Config.training_set_dir
+        rootdir = configuration.Config.training_set_dir
         return(rootdir + str(frame_num) + "/" + str(cam_num) + "/tsdf_path_" + str(kp_num))
 
     def __len__(self):
-        return config.Training_Data_Config.training_data_size
+        return configuration.Training_Data_Config.training_data_size
 
     def _get_item_(self,index):
         #get patch from same classs
         if(index % 2 == 1):
             label = 1
-            kp = random.randint(0,config.Training_Data_Config.number_keypoints - 1)
+            kp = random.randint(0,configuration.Training_Data_Config.number_keypoints - 1)
             frame1,cam1 = random.choice(self.data[kp])
             patch1 = np.load(self._get_patch_path_(frame1,cam1,kp))['patch']
             frame2,cam2 = random.choice(self.data[kp])
@@ -61,10 +61,10 @@ class BalletDancer():
         #get patch from different class
         else:
             label = 0
-            kp_1 = random.randint(0,config.Training_Data_Config.number_keypoints - 1)
-            kp_2 = random.randint(0,config.Training_Data_Config.number_keypoints - 1)
+            kp_1 = random.randint(0,configuration.Training_Data_Config.number_keypoints - 1)
+            kp_2 = random.randint(0,configuration.Training_Data_Config.number_keypoints - 1)
             while kp_1 == kp_2:
-                kp_2 = random.randint(0,config.Training_Data_Config.number_keypoints - 1)
+                kp_2 = random.randint(0,configuration.Training_Data_Config.number_keypoints - 1)
             frame1,cam1 = random.choice(self.data[kp_1])
             patch1 = np.load(self._get_patch_path_(frame1,cam1,kp_1))['patch']
             frame2,cam2 = random.choice(self.data[kp_2])
@@ -83,11 +83,11 @@ class GoalKeeper(Dataset):
         self.val_data = self.load_val_patch
 
     def load_val_patch(self):
-        val_data = np.load(config.Validation_Data_Config.validation_set_dir + "validation_data.npz",allow_pickle=True)['data']
+        val_data = np.load(configuration.Validation_Data_Config.validation_set_dir + "validation_data.npz",allow_pickle=True)['data']
         return val_data
     
     def __len__(self):
-        return config.Validation_Data_Config.validation_data_size
+        return configuration.Validation_Data_Config.validation_data_size
     
     def _get_file_number(self,file):
         file_num = file
@@ -98,7 +98,7 @@ class GoalKeeper(Dataset):
         return file_num
 
     def _get_val_patch_path(self,frame_num,cam_num,kp_num):
-        rootdir = config.Validation_Data_Config.validation_set_dir
+        rootdir = configuration.Validation_Data_Config.validation_set_dir
         return(rootdir + self._get_file_number(frame_num) + str(cam_num) + "/tsdf_patch_" + str(kp_num))
 
     def __getitem__(self,index):
@@ -111,6 +111,6 @@ class GoalKeeper(Dataset):
             patch2 = self.transform(patch2)
 
         return patch1,patch_1,patch2,patch_2,label
-        
+
         
 
