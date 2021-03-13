@@ -1,6 +1,6 @@
 import torch
 
-class Config():
+class training_config():
     training_set_dir = "/cluster/sorona/hyu/ptdcv/ballet/"
     train_batch_size = 64
     train_number_epochs = 100
