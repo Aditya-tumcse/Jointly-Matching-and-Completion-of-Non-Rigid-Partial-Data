@@ -51,48 +51,9 @@ class BasicBlock(nn.Module):
         return out
 
 
-class Bottleneck(nn.Module):
-    expansion = 4
-
-    def __init__(self, in_planes, planes, stride=1, downsample=None):
-        super().__init__()
-
-        self.conv1 = conv1x1x1(in_planes, planes)
-        self.bn1 = nn.BatchNorm3d(planes)
-        self.conv2 = conv3x3x3(planes, planes, stride)
-        self.bn2 = nn.BatchNorm3d(planes)
-        self.conv3 = conv1x1x1(planes, planes * self.expansion)
-        self.bn3 = nn.BatchNorm3d(planes * self.expansion)
-        self.relu = nn.ReLU(inplace=True)
-        self.downsample = downsample
-        self.stride = stride
-
-    def forward(self, x):
-        residual = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu(out)
-
-        out = self.conv3(out)
-        out = self.bn3(out)
-
-        if self.downsample is not None:
-            residual = self.downsample(x)
-
-        out += residual
-        out = self.relu(out)
-
-        return out
-
-
 class ResNet(nn.Module):
 
-    def __init__(self,block,layer,block_inplanes,n_input_channels=3,conv1_t_size=7,conv1_t_stride=1,no_max_pool=False,shortcut_type='B',widen_factor=1.0,n_classes=100):
+    def __init__(self,block,layer,block_inplanes,n_input_channels=1,conv1_t_size=7,conv1_t_stride=1,no_max_pool=False,shortcut_type='B',widen_factor=1.0,n_classes=100):
         super().__init__()
 
         block_inplanes = [int(x * widen_factor) for x in block_inplanes]
@@ -100,7 +61,7 @@ class ResNet(nn.Module):
         self.in_planes = block_inplanes[0]
         self.no_max_pool = no_max_pool
 
-        self.conv1 = nn.Conv3d(n_input_channels,self.in_planes,kernel_size=(conv1_t_size, 7, 7),stride=(conv1_t_stride, 2, 2),padding=(conv1_t_size // 2, 3, 3),bias=False)
+        self.conv1 = nn.Conv3d(n_input_channels,self.in_planes,kernel_size=(7, 7, 7),stride=(2, 2, 2),padding=(3, 3, 3),bias=False)
         self.bn1 = nn.BatchNorm3d(self.in_planes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1)
@@ -146,6 +107,10 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
+    def normalize(self,x):
+        n = torch.sqrt(torch.sum(x*x,dim=-1,keepdim=True))
+        return x/n
+
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
@@ -162,7 +127,8 @@ class ResNet(nn.Module):
 
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-
+        
+        x = self.normalize(x)
         return x
 
 
