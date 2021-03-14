@@ -22,17 +22,26 @@ class BalletDancer(Dataset):
         data_set = self.data_initializer()
         
         visible_key_point = np.load(rootdir + "/kp_visibility.npz",allow_pickle=True)['visibility']
+        #print(visible_key_point)
         k = 0
         for i in range(int(min(dirs)),int(max(dirs)),configuration.Training_Data_Config.stride):
             cam_num = os.listdir(rootdir + str(i))
             
             for cam in range(len(cam_num)):
                 visible_kp = visible_key_point[k][cam]
+                print(len(visible_kp))
                 for j in range(len(visible_kp)):
+                    #print(j)
                     key_point = visible_kp[j]
+                    #print(key_point)
                     data_set[key_point].append((i,cam))
+                    
                     self.idx += 1
+                
             k += 1
+        a,b = random.choice(data_set[0])
+        print(np.load(rootdir + str(a) + "/" + str(a) + "_" + str(b) + "/tsdf_patch_" + str(0) + ".npz")['patch'])
+
         print("Data loading complete")
         return data_set
         
@@ -44,18 +53,18 @@ class BalletDancer(Dataset):
         
     def _get_patch_path_(self,frame_num,cam_num,kp_num):
         rootdir = configuration.training_configuration.training_set_dir
-        return(rootdir + str(frame_num) + "/" + str(cam_num) + "/tsdf_path_" + str(kp_num))
+        return(rootdir + str(frame_num) + "/" + str(frame_num) + "_" + str(cam_num) + "/tsdf_patch_" + str(kp_num) + ".npz")
 
     def __len__(self):
         return configuration.Training_Data_Config.training_data_size
 
-    def _get_item_(self,index):
+    def __getitem__(self,index):
         #get patch from same classs
         if(index % 2 == 1):
             label = 1
             kp = random.randint(0,configuration.Training_Data_Config.number_keypoints - 1)
             frame1,cam1 = random.choice(self.data[kp])
-            patch1 = np.load(self._get_patch_path_(frame1,cam1,kp))['patch']
+            patch1 = np.load(self._get_patch_path_(frame1,cam1,kp))
             frame2,cam2 = random.choice(self.data[kp])
             patch2 = np.load(self._get_patch_path_(frame2,cam2,kp))['patch']
         #get patch from different class
@@ -68,7 +77,7 @@ class BalletDancer(Dataset):
             frame1,cam1 = random.choice(self.data[kp_1])
             patch1 = np.load(self._get_patch_path_(frame1,cam1,kp_1))['patch']
             frame2,cam2 = random.choice(self.data[kp_2])
-            patch2 = np.load(self._get_patch_path_(frame1,cam1,kp_2))['patch']
+            patch2 = np.load(self._get_patch_path_(frame2,cam2,kp_2))['patch']
 
         if self.transform:
             patch1 = self.transform(patch1)
@@ -99,7 +108,7 @@ class GoalKeeper(Dataset):
 
     def _get_val_patch_path(self,frame_num,cam_num,kp_num):
         rootdir = configuration.Validation_Data_Config.validation_set_dir
-        return(rootdir + self._get_file_number(frame_num) + str(cam_num) + "/tsdf_patch_" + str(kp_num))
+        return(rootdir + self._get_file_number(frame_num) + str(cam_num) + "/tsdf_patch_" + str(kp_num) + ".npz")
 
     def __getitem__(self,index):
         patch_1,patch_2,label = self.val_data[index]
@@ -114,3 +123,6 @@ class GoalKeeper(Dataset):
 
         
 
+if __name__ == '__main__':
+    a = BalletDancer()
+    
