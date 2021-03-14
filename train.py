@@ -13,6 +13,7 @@ import wandb
 import resnet
 import siamese
 import loss
+import spatial_transform
 import configuration
 
 def wandb_initiliazer(arguments):
@@ -26,7 +27,7 @@ def wandb_initiliazer(arguments):
 
 
 def nn_model(config):
-    data_transforms = transforms.Compose([transforms.ToTensor()]) 
+    data_transforms = transforms.Compose([spatial_transform.spatial_tranf()])
 
     
     train_set = BalletDancer(data_transforms) 
@@ -39,11 +40,11 @@ def nn_model(config):
     #Build the model
     intermediate_net = resnet.generate_model(configuration.training_configuration.resnet_depth)
     siamese_net = siamese.Siamese(intermediate_net)
-
-    loss_function = loss.ContrastiveLoss(configuration.training_configuration.contrastive_margin)
-
+    
     if configuration.training_configuration.device.type == 'cuda':
         siamese_net.cuda()
+
+    loss_function = loss.ContrastiveLoss(configuration.training_configuration.contrastive_margin)
 
     
     optimizer = torch.optim.Adam(siamese_net.parameters(),lr=configuration.training_configuration.learning_rate)
@@ -87,8 +88,8 @@ def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,confi
                 patch1, patch2, label = patch1,patch2,label
         
             
-            output1,output2 = NN_model(patch1.float(),patch2.float())
-            distances = (output2 - output1).pow(2).sum(1)
+            output = NN_model(patch1.float(),patch2.float())
+            distances = (output[1] - output[0]).pow(2).sum(1)
             loss = loss_function(distances,label)
             
             optimizer.zero_grad()
