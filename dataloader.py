@@ -36,9 +36,6 @@ class BalletDancer(Dataset):
                     self.idx += 1
                 
             k += 1
-        a,b = random.choice(data_set[0])
-        print(np.load(rootdir + str(a) + "/" + str(a) + "_" + str(b) + "/tsdf_patch_" + str(0) + ".npz")['patch'])
-
         print("Data loading complete")
         return data_set
         
@@ -77,8 +74,8 @@ class BalletDancer(Dataset):
             patch2 = np.load(self._get_patch_path_(frame2,cam2,kp_2))['patch']
 
         if self.transform:
-            patch1 = torch.tensor(patch1)
-            patch2 = torch.tensor(patch2)
+            patch1 = torch.tensor([patch1])
+            patch2 = torch.tensor([patch2])
         
         return(patch1,patch2,label)
 
@@ -86,21 +83,13 @@ class GoalKeeper(Dataset):
     def __init__(self,transform=None):
         super(GoalKeeper,self).__init__
         self.transform = transform
-        self.val_data = self.load_val_patch
-
-    def load_val_patch(self):
-        val_data = np.load(configuration.Validation_Data_Config.validation_set_dir + "validation_data.npz",allow_pickle=True)['data']
-        return val_data
+        self.val_data = np.load(configuration.Validation_Data_Config.validation_set_dir + "validation_data.npz",allow_pickle=True)['data']
     
     def __len__(self):
         return configuration.Validation_Data_Config.validation_data_size
     
     def _get_file_number(self,file):
-        file_num = file
-        if file < 100:
-            file_num = "00" + str(file)
-        else:
-            file_num = "0" + str(file)
+        file_num = str(file)
         return file_num
 
     def _get_val_patch_path(self,frame_num,cam_num,kp_num):
@@ -109,14 +98,14 @@ class GoalKeeper(Dataset):
 
     def __getitem__(self,index):
         patch_1,patch_2,label = self.val_data[index]
-        patch1 = np.load(self._get_val_patch_path(patch_1[0],patch_1[1],patch_1[2]))
-        patch2 = np.load(self._get_val_patch_path(patch_2[0],patch_2[1],patch_2[2]))
+        patch1 = np.load(self._get_val_patch_path(patch_1[0],patch_1[1],patch_1[2]))['patch']
+        patch2 = np.load(self._get_val_patch_path(patch_2[0],patch_2[1],patch_2[2]))['patch']
 
         if self.transform:
-            patch1 = self.transform(patch1)
-            patch2 = self.transform(patch2)
+            patch1 = torch.tensor([patch1])
+            patch2 = torch.tensor([patch2])
 
-        return patch1,patch_1,patch2,patch_2,label
+        return patch1,patch2,label,patch_1,patch_2
 
         
 """
