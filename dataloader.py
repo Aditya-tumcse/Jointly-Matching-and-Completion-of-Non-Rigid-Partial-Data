@@ -22,18 +22,15 @@ class BalletDancer(Dataset):
         data_set = self.data_initializer()
         
         visible_key_point = np.load(rootdir + "/kp_visibility.npz",allow_pickle=True)['visibility']
-        #print(visible_key_point)
+        
         k = 0
         for i in range(int(min(dirs)),int(max(dirs)),configuration.Training_Data_Config.stride):
             cam_num = os.listdir(rootdir + str(i))
             
             for cam in range(len(cam_num)):
                 visible_kp = visible_key_point[k][cam]
-                print(len(visible_kp))
                 for j in range(len(visible_kp)):
-                    #print(j)
                     key_point = visible_kp[j]
-                    #print(key_point)
                     data_set[key_point].append((i,cam))
                     
                     self.idx += 1
@@ -64,7 +61,7 @@ class BalletDancer(Dataset):
             label = 1
             kp = random.randint(0,configuration.Training_Data_Config.number_keypoints - 1)
             frame1,cam1 = random.choice(self.data[kp])
-            patch1 = np.load(self._get_patch_path_(frame1,cam1,kp))
+            patch1 = np.load(self._get_patch_path_(frame1,cam1,kp))['patch']
             frame2,cam2 = random.choice(self.data[kp])
             patch2 = np.load(self._get_patch_path_(frame2,cam2,kp))['patch']
         #get patch from different class
@@ -80,8 +77,8 @@ class BalletDancer(Dataset):
             patch2 = np.load(self._get_patch_path_(frame2,cam2,kp_2))['patch']
 
         if self.transform:
-            patch1 = self.transform(patch1)
-            patch2 = self.transform(patch2)
+            patch1 = torch.tensor(patch1)
+            patch2 = torch.tensor(patch2)
         
         return(patch1,patch2,label)
 
@@ -122,7 +119,7 @@ class GoalKeeper(Dataset):
         return patch1,patch_1,patch2,patch_2,label
 
         
-
+"""
 if __name__ == '__main__':
     a = BalletDancer()
-    
+""" 
