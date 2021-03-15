@@ -10,7 +10,7 @@ class training_configuration():
     resnet_depth = 18
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     number_workers = 4
-    plot_frequency = 300
+    plot_frequency = 100
     
 class Training_Data_Config():
     number_keypoints = 400
