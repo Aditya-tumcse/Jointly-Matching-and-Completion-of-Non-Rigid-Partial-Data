@@ -5,6 +5,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from dataloader import BalletDancer,GoalKeeper
+from torch.optim import lr_scheduler
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -20,9 +21,9 @@ def wandb_initiliazer(arguments):
     with wandb.init(project="TDCV_2", config=arguments):
         config = wandb.config
 
-        model, train_loader,val_loader,loss_fn, optimizer = nn_model(config)
+        model, train_loader,val_loader,loss_fn, optimizer,scheduler = nn_model(config)
 
-        train(model, train_loader, val_loader, loss_fn, optimizer, configuration)
+        train(model, train_loader, val_loader, loss_fn, optimizer, scheduler, configuration)
     return model
 
 
@@ -48,7 +49,8 @@ def nn_model(config):
 
     
     optimizer = torch.optim.Adam(siamese_net.parameters(),lr=configuration.training_configuration.learning_rate)
-    return siamese_net,train_set_loader,validation_set_loader,loss_function,optimizer
+    scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=20, gamma=0.1)
+    return siamese_net,train_set_loader,validation_set_loader,loss_function,optimizer,scheduler
 
 def validation_phase(NN_model,val_set_loader,loss_function):
     NN_model.eval()
@@ -72,7 +74,7 @@ def validation_phase(NN_model,val_set_loader,loss_function):
 
     return loss_val/mini_batches
     
-def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,configuration):
+def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,configuration,scheduler):
     wandb.watch(NN_model,loss_function,log='all',log_freq=50)
     
     num_seen_samples = 0
@@ -110,6 +112,10 @@ def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,confi
                 training_log(loss_value,mini_batches)
                 training_log(val_loss,mini_batches,False)
                 loss_val = 0
+            
+            scheduler.step()
+            print('Epoch-{0} lr: {1:f}'.format(epoch, optimizer.param_groups[0]['lr']))
+
             
 def training_log(loss,iteration,NN_train = True):
     if NN_train:
