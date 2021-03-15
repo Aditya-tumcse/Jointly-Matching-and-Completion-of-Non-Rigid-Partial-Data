@@ -53,7 +53,7 @@ class BasicBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self,block,layer,block_inplanes,n_input_channels=1,conv1_t_size=7,conv1_t_stride=1,no_max_pool=False,shortcut_type='B',widen_factor=1.0,n_classes=100):
+    def __init__(self,block,layer,block_inplanes,n_input_channels=1,conv1_t_size=7,conv1_t_stride=1,no_max_pool=False,shortcut_type='B',widen_factor=1.0,n_classes=256):
         super().__init__()
 
         block_inplanes = [int(x * widen_factor) for x in block_inplanes]
@@ -142,9 +142,8 @@ def generate_model(model_depth, **kwargs):
     
     return model
 
-"""
+
 #For test
 if __name__ == '__main__':
     net = generate_model(18)
     print(net)
-"""
