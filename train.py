@@ -15,6 +15,7 @@ import resnet
 import siamese
 import loss
 import configuration
+from wandb_log import training_log
 
 def wandb_initiliazer(arguments):
     with wandb.init(project="TDCV_2", config=arguments):
@@ -69,8 +70,8 @@ def validation_phase(NN_model,val_set_loader,loss_function):
         else:
             patch1, patch2, label = patch1,patch2,label
 
-        output1,output2 = NN_model(patch1.float(),patch2.float())
-        distances = (output2 - output1).pow(2).sum(1)
+        output = NN_model(patch1.float(),patch2.float())
+        distances = (output[1] - output[0]).pow(2).sum(1)
         loss = loss_function(distances,label)
 
         acc_pred_1 = distances < 0.1
@@ -89,6 +90,7 @@ def validation_phase(NN_model,val_set_loader,loss_function):
         acc_D = 1.0 * (acc_pred_4 == label)
         acc_metric_4 += acc_D.mean()
 
+        """
         if graph:
             print(graph)
             for k in range(len(acc_metric_2)):
@@ -97,7 +99,7 @@ def validation_phase(NN_model,val_set_loader,loss_function):
                     print("Patch1:",x[0][k],x[1][k],x[2][k])
                     print("Patch2:",y[0][k],y[1][k],y[2][k])
 
-        
+        """
         mini_batches += 1
         loss_val += float(loss)
 
@@ -107,7 +109,7 @@ def validation_phase(NN_model,val_set_loader,loss_function):
             graph = False
 
     accuracy = [acc_metric_1/mini_batches, acc_metric_2/mini_batches, acc_metric_3/mini_batches, acc_metric_4/mini_batches]
-    loss_val = loss_val/mini_batches
+    loss_val = loss_val/configuration.Validation_Data_Config.validation_data_size
     return accuracy, loss_val
     
 def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,configuration,scheduler):
@@ -162,7 +164,7 @@ def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,confi
             if (mini_batches % 200) == 0:
                 print("Training loss after %d batches"%(int(num_seen_samples/configuration.training_configuration.train_batch_size)))
 
-            #Plotting in wand b
+            #Plotting in wandb
             if (mini_batches % configuration.training_configuration.plot_frequency == 0):
                 val_accuracy, val_loss = validation_phase(NN_model,val_set_loader,loss_function)
                 accuracy = [acc_metric_1/configuration.training_configuration.plot_frequency, acc_metric_2/configuration.training_configuration.plot_frequency, acc_metric_3/configuration.training_configuration.plot_frequency, acc_metric_4/configuration.training_configuration.plot_frequency]
@@ -177,25 +179,4 @@ def train(NN_model,train_set_loader,val_set_loader,loss_function,optimizer,confi
             
             scheduler.step()
             print('Epoch-{0} lr: {1:f}'.format(epoch, optimizer.param_groups[0]['lr']))
-
-            
-def training_log(loss,accuracy,iteration,NN_train = True):
-    if NN_train:
-        wandb.log({"Traning loss":float(loss)},step=iteration)
-        wandb.log({"Training accuracy 0.1":accuracy[0]},step=iteration)
-        wandb.log({"Training accuracy 0.4":accuracy[1]},step=iteration)
-        wandb.log({"Training accuracy 0.7":accuracy[2]},step=iteration)
-        wandb.log({"Training accuracy 1.0":accuracy[3]},step=iteration)
-
-        print("Training loss after " + str(iteration) + "iterations:" + str(float(loss)))
-        print("Training accuracy after " + str(iteration) + "iterations:" + str(float(accuracy[0])))
-        
-    else:
-        wandb.log({"Validation loss":float(loss)},step=iteration)
-        wandb.log({"Validation accuracy 0.1":accuracy[0]},step=iteration)
-        wandb.log({"Validation accuracy 0.4":accuracy[1]},step=iteration)
-        wandb.log({"Validation accuracy 0.7":accuracy[2]},step=iteration)
-        wandb.log({"Validation accuracy 1.0":accuracy[3]},step=iteration)
-        print("Validation loss after " + str(iteration) + "iterations:" + str(float(loss)))
-        print("Validation accuracy after " + str(iteration) + "iterations:" + str(float(accuracy[0])))
 
