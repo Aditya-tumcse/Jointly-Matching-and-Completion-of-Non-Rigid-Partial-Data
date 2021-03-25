@@ -1,4 +1,4 @@
-import train
+import hourglass_train
 import wandb
 import configuration
 
@@ -6,4 +6,4 @@ params = dict(epochs=configuration.training_configuration.train_number_epochs,ba
 
 if __name__ == '__main__':
     wandb.login()
-    model = train.wandb_initiliazer(params)
+    model = hourglass_train.wandb_initiliazer(params)
