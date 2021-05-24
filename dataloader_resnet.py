@@ -2,7 +2,6 @@ import torch
 import os
 import numpy as np
 import random
-import numpy as np
 import configuration
 from torch.utils.data import Dataset,DataLoader
 
