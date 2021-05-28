@@ -23,6 +23,27 @@ Recently, with the rapid development of computation power, learning-based method
     - on the same dataset with the same network but using different embedding learning losses.
     
 # Results
+The following figure consists the camera positions generated around the human body dataset consisting of keypoints to establish correspondeces among different deformed models and to do virtual scan.
+<h2 align = "center">
+    <img src = "Images/scan.png" width="500px">
+</h2>
+
+The figure below shows the non - rigid partial data obtained as a TSDF representation.
+<h2 align = "center">
+    <img src = "Images/patches.png" width="500px">
+</h2>
+Below are the training and validations loss curves and accuracy curves for threshold values of 0.1,0.4,0.7 and 1.0 for a neural network without completion proxy.
+<h2 align = "center">
+    <img src = "Images/trainingloss.png" width="300px">
+</h2>
+<h2 align = "center">
+    <img src = "Images/accuracy.png" width="300px">
+</h2>
+
+Below is the training and validation loss curves for a neural network with completion proxy.
+<h2 align = "center">
+    <img src = "Images/completionproxy.png" width="300px">
+</h2>
 
 # References
 1. Andy Zeng et al. “3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions”. In: CVPR.2017.
